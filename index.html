@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        text-align: center;
+    }
+    .question {
+        margin-bottom: 20px;
+    }
+    .options {
+        margin-bottom: 20px;
+    }
+    .option-input {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+    .btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #4CAF50;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .btn:hover {
+        background-color: #45a049;
+    }
+    .result {
+        margin-top: 20px;
+        text-align: center;
+    }
+    .correct {
+        color: green;
+    }
+    .incorrect {
+        color: red;
+    }
+    .progress-container {
+        width: 100%;
+        height: 20px;
+        background-color: #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 10px;
+        position: relative;
+    }
+    .progress-bar {
+        height: 100%;
+        background-color: #4CAF50;
+        width: 0;
+    }
+    .progress-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #000;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Quiz</h1>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button class="btn" id="next-btn">Next</button>
+    <div class="result" id="result"></div>
+    <button class="btn" id="try-again-btn" style="display: none;">Try Again</button>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+        <div class="progress-label" id="progress-label"></div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            question: "What is the smallest 6-digit odd number that can be formed from the digits 7,3,4,0,8 and 6?",
+            answer: "304687"
+        },
+        {
+            question: "What is the highest number of children that can share 120 mangoes or 90 apples  without a remainder?",
+            answer: "360"
+        },
+        {
+            question: "A wholesaler had three different types of tea whose masses were 408 kg , 468 kg and 516 kg. He packed the tea into bags of equal size without mixing. Work out the highest mass of tea he packed in each bag?",
+            answer: "12"
+        },
+        {
+            question: "Peter has two friends,Ali and John. Ali visit him after every 4 days and John visits him after every 7 days.After how long will they visit again?",
+            answer: "28"
+        },{
+            question: "Mr. Musembi bought a car. He paid sh.984, 500 using a cheque. What is the total value of digit 8 in the number?",
+            answer: "28"
+        },{
+            question: "During a tree planting day, 1269 tree seedlings were bought at sh. 15 each. Each person contributed equally to buy the seedlings . if there were 350 people , how much did each person get?",
+            answer: "54"
+        }
+    ];
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    questions.forEach(question => {
+        question.options = shuffle([question.answer, "Option 1", "Option 2", "Option 3"]);
+    });
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answers = new Array(questions.length).fill(undefined);
+
+    const questionElement = document.getElementById("question");
+    const optionsElement = document.getElementById("options");
+    const nextButton = document.getElementById("next-btn");
+    const resultElement = document.getElementById("result");
+    const tryAgainButton = document.getElementById("try-again-btn");
+    const progressBar = document.getElementById("progress-bar");
+    const progressLabel = document.getElementById("progress-label");
+
+    function displayQuestion(questionIndex) {
+        const question = questions[questionIndex];
+        questionElement.innerText = `${questionIndex + 1}/${questions.length}: ${question.question}`;
+        optionsElement.innerHTML = "";
+
+        const answerInput = document.createElement("input");
+        answerInput.type = "text";
+        answerInput.placeholder = "Type your answer here";
+        answerInput.classList.add("option-input");
+        optionsElement.appendChild(answerInput);
+
+        nextButton.disabled = true;
+        updateProgressBar(questionIndex);
+    }
+
+    function submitQuiz() {
+        const correctAnswer = questions[currentQuestion].answer;
+        const userAnswer = answers[currentQuestion].toLowerCase().trim();
+        const isCorrect = userAnswer === correctAnswer.toLowerCase();
+
+        // Display user response with color and symbol
+        const responseElement = document.createElement("div");
+        responseElement.textContent = answers[currentQuestion];
+        if (isCorrect) {
+            responseElement.classList.add("correct");
+            responseElement.innerHTML += " &#10004;"; // Add checkmark for correct answer
+        } else {
+            responseElement.classList.add("incorrect");
+            responseElement.innerHTML += " &#10008;"; // Add cross mark for incorrect answer
+
+            // Display correct answer
+            const correctAnswerElement = document.createElement("span");
+            correctAnswerElement.textContent = ` Correct answer: ${correctAnswer}`;
+            correctAnswerElement.classList.add("correct");
+            responseElement.appendChild(correctAnswerElement);
+        }
+        resultElement.appendChild(responseElement);
+
+        if (isCorrect) {
+            score++;
+        }
+
+        // Increment current question index
+        currentQuestion++;
+
+        // Check if all questions have been answered
+        if (currentQuestion < questions.length) {
+            displayQuestion(currentQuestion);
+        } else {
+            displayResult();
+        }
+    }
+
+    function displayResult() {
+        let remarks = "";
+        let fontColor = "";
+
+        const percentage = ((score / questions.length) * 100).toFixed(2);
+
+        if (percentage < 25) {
+            remarks = "Below Expectation";
+            fontColor = "red";
+        } else if (percentage < 50) {
+            remarks = "Approaching Expectation";
+            fontColor = "orange";
+        } else if (percentage < 80) {
+            remarks = "Meeting Expectation";
+            fontColor = "yellow";
+        } else {
+            remarks = "Exceeding Expectation";
+            fontColor = "darkgreen";
+        }
+
+        resultElement.innerHTML += `<div style="color: ${fontColor};">Your score is: ${score}/${questions.length} (${percentage}%)<br>${remarks}</div>`;
+
+        tryAgainButton.style.display = "inline-block";
+    }
+
+    function tryAgain() {
+        currentQuestion = 0;
+        score = 0;
+        answers = new Array(questions.length).fill(undefined);
+        resultElement.innerHTML = ""; // Clear previous results
+        displayQuestion(currentQuestion);
+        tryAgainButton.style.display = "none";
+    }
+
+    nextButton.addEventListener("click", () => {
+        submitQuiz();
+    });
+
+    document.getElementById('options').addEventListener('input', function(event) {
+        nextButton.disabled = event.target.value.trim() === '';
+        if (event.target.value.trim() !== '') {
+            answers[currentQuestion] = event.target.value.trim();
+        }
+    });
+
+    function updateProgressBar(questionIndex) {
+        const progress = ((questionIndex + 1) / questions.length) * 100;
+        progressBar.style.width = `${progress}%`;
+        progressLabel.textContent = `Progress: ${progress.toFixed(2)}%`;
+    }
+
+    displayQuestion(currentQuestion);
+    tryAgainButton.addEventListener('click', tryAgain);
+</script>
+
+</body>
+</html>
